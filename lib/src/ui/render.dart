@@ -412,7 +412,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     for (var i = effectFirstLine; i <= effectLastLine; i++) {
       _paintLine(
         canvas,
-        lines[i],
+        i,
         offset.translate(0, (i * charHeight + _lineOffset).truncateToDouble()),
       );
     }
@@ -425,12 +425,12 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _paintComposingText(canvas, cursorOffset);
       }
 
-      if (_shouldShowCursor) {
+      if (_shouldShowCursor && _theme.cursor != null) {
         _paintCursor(canvas, cursorOffset);
       }
     }
 
-    if (_controller.selection != null) {
+    if (_controller.selection != null && _theme.selection != null) {
       _paintSelection(
         canvas,
         _controller.selection!,
@@ -443,7 +443,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
   /// Paints the cursor based on the current cursor type.
   void _paintCursor(Canvas canvas, Offset offset) {
     final paint = Paint()
-      ..color = _theme.cursor
+      ..color = _theme.cursor!
       ..strokeWidth = 1;
 
     if (!_focusNode.hasFocus) {
@@ -502,26 +502,45 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
     canvas.drawParagraph(paragraph, Offset(0, offset.dy));
   }
 
+  void _toggleInverse(CellData cellData) {
+    if (cellData.flags & CellFlags.inverse == 0) {
+      cellData.flags |= CellFlags.inverse;
+    } else {
+      cellData.flags &= ~CellFlags.inverse;
+    }
+  }
+
   /// Paints [line] to [canvas] at [offset]. The x offset of [offset] is usually
   /// 0, and the y offset is the top of the line.
-  void _paintLine(Canvas canvas, BufferLine line, Offset offset) {
+  void _paintLine(Canvas canvas, int y, Offset offset) {
+    final line = _terminal.buffer.lines[y];
     final cellData = CellData.empty();
     final cellWidth = _charSize.width;
 
     final visibleCells = size.width ~/ cellWidth + 1;
     final effectCells = min(visibleCells, line.length);
 
-    for (var i = 0; i < effectCells; i++) {
-      line.getCellData(i, cellData);
+    for (var x = 0; x < effectCells; x++) {
+      line.getCellData(x, cellData);
+
+      if (_theme.selection == null &&
+          _controller.selection?.contains(CellOffset(x, y)) == true) {
+        _toggleInverse(cellData);
+      }
+      if (_theme.cursor == null &&
+          _terminal.buffer.absoluteCursorY == y &&
+          _terminal.buffer.cursorX == x) {
+        _toggleInverse(cellData);
+      }
 
       final charWidth = cellData.content >> CellContent.widthShift;
-      final cellOffset = offset.translate(i * cellWidth, 0);
+      final cellOffset = offset.translate(x * cellWidth, 0);
 
       _paintCellBackground(canvas, cellOffset, cellData);
       _paintCellForeground(canvas, cellOffset, cellData);
 
       if (charWidth == 2) {
-        i++;
+        x++;
       }
     }
   }
@@ -559,7 +578,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       );
 
       final paint = Paint()
-        ..color = _theme.selection
+        ..color = _theme.selection!
         ..strokeWidth = 1;
 
       canvas.drawRect(

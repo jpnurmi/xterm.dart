@@ -2,8 +2,8 @@ import 'package:flutter/widgets.dart';
 
 class TerminalTheme {
   const TerminalTheme({
-    required this.cursor,
-    required this.selection,
+    this.cursor,
+    this.selection,
     required this.foreground,
     required this.background,
     required this.black,
@@ -27,8 +27,8 @@ class TerminalTheme {
     required this.searchHitForeground,
   });
 
-  final Color cursor;
-  final Color selection;
+  final Color? cursor;
+  final Color? selection;
 
   final Color foreground;
   final Color background;
