@@ -425,7 +425,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _paintComposingText(canvas, cursorOffset);
       }
 
-      if (_shouldShowCursor && _theme.cursor != null) {
+      if (_shouldShowCursor) {
         _paintCursor(canvas, cursorOffset);
       }
     }
@@ -442,8 +442,19 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
 
   /// Paints the cursor based on the current cursor type.
   void _paintCursor(Canvas canvas, Offset offset) {
+    var color = _theme.cursor;
+    if (color == null) {
+      final x = _terminal.buffer.cursorX;
+      final y = _terminal.buffer.absoluteCursorY;
+      if (_controller.selection?.contains(CellOffset(x, y)) == true) {
+        color = _theme.background;
+      } else {
+        color = _theme.foreground;
+      }
+    }
+
     final paint = Paint()
-      ..color = _theme.cursor!
+      ..color = color
       ..strokeWidth = 1;
 
     if (!_focusNode.hasFocus) {
@@ -452,23 +463,25 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
       return;
     }
 
-    switch (_cursorType) {
-      case TerminalCursorType.block:
-        paint.style = PaintingStyle.fill;
-        canvas.drawRect(offset & _charSize, paint);
-        return;
-      case TerminalCursorType.underline:
-        return canvas.drawLine(
-          Offset(offset.dx, _charSize.height - 1),
-          Offset(offset.dx + _charSize.width, _charSize.height - 1),
-          paint,
-        );
-      case TerminalCursorType.verticalBar:
-        return canvas.drawLine(
-          Offset(offset.dx, 0),
-          Offset(offset.dx, _charSize.height),
-          paint,
-        );
+    if (_theme.cursor != null) {
+      switch (_cursorType) {
+        case TerminalCursorType.block:
+          paint.style = PaintingStyle.fill;
+          canvas.drawRect(offset & _charSize, paint);
+          return;
+        case TerminalCursorType.underline:
+          return canvas.drawLine(
+            Offset(offset.dx, _charSize.height - 1),
+            Offset(offset.dx + _charSize.width, _charSize.height - 1),
+            paint,
+          );
+        case TerminalCursorType.verticalBar:
+          return canvas.drawLine(
+            Offset(offset.dx, 0),
+            Offset(offset.dx, _charSize.height),
+            paint,
+          );
+      }
     }
   }
 
@@ -528,6 +541,7 @@ class RenderTerminal extends RenderBox with RelayoutWhenSystemFontsChangeMixin {
         _toggleInverse(cellData);
       }
       if (_theme.cursor == null &&
+          _focusNode.hasFocus &&
           _terminal.buffer.absoluteCursorY == y &&
           _terminal.buffer.cursorX == x) {
         _toggleInverse(cellData);

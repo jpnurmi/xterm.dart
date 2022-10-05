@@ -56,6 +56,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  final focusNode = FocusNode();
+
   final terminal = Terminal(
     maxLines: 10000,
   );
@@ -108,21 +110,49 @@ class _HomeState extends State<Home> {
         child: TerminalView(
           terminal,
           controller: terminalController,
-          autofocus: true,
-          backgroundOpacity: 0.7,
+          //autofocus: true,
+          focusNode: focusNode,
+          theme: TerminalTheme(
+            //cursor: Color(0XAAAEAFAD),
+            //cursor: Colors.yellow,
+            //selection: Color(0XFFFFFF40),
+            //selection: Colors.red,
+            foreground: Color(0XFFCCCCCC),
+            background: Color(0XFF1E1E1E),
+            black: Colors.black,
+            red: Colors.red,
+            green: Colors.green,
+            yellow: Colors.yellow,
+            blue: Colors.blue,
+            magenta: Colors.purple,
+            cyan: Colors.cyan,
+            white: Colors.white,
+            brightBlack: Colors.black,
+            brightRed: Colors.red[300]!,
+            brightGreen: Colors.green[300]!,
+            brightYellow: Colors.yellow[300]!,
+            brightBlue: Colors.blue[300]!,
+            brightMagenta: Colors.purple[300]!,
+            brightCyan: Colors.cyan[300]!,
+            brightWhite: Colors.white,
+            searchHitBackground: Color(0XFFFFFF2B),
+            searchHitBackgroundCurrent: Color(0XFF31FF26),
+            searchHitForeground: Color(0XFF000000),
+          ),
           onSecondaryTapDown: (details, offset) async {
-            final selection = terminalController.selection;
-            if (selection != null) {
-              final text = terminal.buffer.getText(selection);
-              terminalController.clearSelection();
-              await Clipboard.setData(ClipboardData(text: text));
-            } else {
-              final data = await Clipboard.getData('text/plain');
-              final text = data?.text;
-              if (text != null) {
-                terminal.paste(text);
-              }
-            }
+            focusNode.unfocus();
+            // final selection = terminalController.selection;
+            // if (selection != null) {
+            //   final text = terminal.buffer.getText(selection);
+            //   terminalController.clearSelection();
+            //   await Clipboard.setData(ClipboardData(text: text));
+            // } else {
+            //   final data = await Clipboard.getData('text/plain');
+            //   final text = data?.text;
+            //   if (text != null) {
+            //     terminal.paste(text);
+            //   }
+            // }
           },
         ),
       ),
