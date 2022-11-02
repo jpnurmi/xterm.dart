@@ -27,6 +27,7 @@ class TerminalView extends StatefulWidget {
     this.controller,
     this.theme = TerminalThemes.defaultTheme,
     this.textStyle = const TerminalStyle(),
+    this.textScaleFactor,
     this.padding,
     this.scrollController,
     this.autoResize = true,
@@ -58,6 +59,11 @@ class TerminalView extends StatefulWidget {
 
   /// The style to use for painting characters.
   final TerminalStyle textStyle;
+
+  /// The number of font pixels for each logical pixel. If null, will use the
+  /// [MediaQueryData.textScaleFactor] obtained from [MediaQuery], or 1.0 if
+  /// there is no [MediaQuery] in scope.
+  final double? textScaleFactor;
 
   /// Padding around the inner [Scrollable] widget.
   final EdgeInsets? padding;
@@ -217,6 +223,8 @@ class TerminalViewState extends State<TerminalView> {
           padding: MediaQuery.of(context).padding,
           autoResize: widget.autoResize,
           textStyle: widget.textStyle,
+          textScaleFactor:
+              widget.textScaleFactor ?? MediaQuery.textScaleFactorOf(context),
           theme: widget.theme,
           focusNode: _focusNode,
           cursorType: widget.cursorType,
@@ -342,8 +350,18 @@ class TerminalViewState extends State<TerminalView> {
   }
 
   void _onInsert(String text) {
+    final key = charToTerminalKey(text.trim());
+
+    // On mobile platforms there is no guarantee that virtual keyboard will
+    // generate hardware key events. So we need first try to send the key
+    // as a hardware key event. If it fails, then we send it as a text input.
+    final consumed = key == null ? false : widget.terminal.keyInput(key);
+
+    if (!consumed) {
+      widget.terminal.textInput(text);
+    }
+
     _scrollToBottom();
-    widget.terminal.textInput(text);
   }
 
   void _onComposing(String? text) {
@@ -365,7 +383,7 @@ class TerminalViewState extends State<TerminalView> {
       return KeyEventResult.ignored;
     }
 
-    final key = inputMap(event.logicalKey);
+    final key = keyToTerminalKey(event.logicalKey);
 
     if (key == null) {
       return KeyEventResult.ignored;
@@ -414,6 +432,7 @@ class _TerminalView extends LeafRenderObjectWidget {
     required this.padding,
     required this.autoResize,
     required this.textStyle,
+    required this.textScaleFactor,
     required this.theme,
     required this.focusNode,
     required this.cursorType,
@@ -433,6 +452,8 @@ class _TerminalView extends LeafRenderObjectWidget {
   final bool autoResize;
 
   final TerminalStyle textStyle;
+
+  final double textScaleFactor;
 
   final TerminalTheme theme;
 
@@ -455,6 +476,7 @@ class _TerminalView extends LeafRenderObjectWidget {
       padding: padding,
       autoResize: autoResize,
       textStyle: textStyle,
+      textScaleFactor: textScaleFactor,
       theme: theme,
       focusNode: focusNode,
       cursorType: cursorType,
@@ -473,6 +495,7 @@ class _TerminalView extends LeafRenderObjectWidget {
       ..padding = padding
       ..autoResize = autoResize
       ..textStyle = textStyle
+      ..textScaleFactor = textScaleFactor
       ..theme = theme
       ..focusNode = focusNode
       ..cursorType = cursorType
