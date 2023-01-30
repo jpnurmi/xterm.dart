@@ -1,7 +1,13 @@
-## [next] - unreleased
-* Mouse input is enabled by default.
+## [3.4.1] - 2023-01-27
+* Fix Flutter 3.7 incompatibilities [#151], thanks [@jpnurmi].
 
-## [3.3.0] - 2022-9-13
+## [3.4.0] - 2022-11-4
+* Mouse input is enabled by default.
+* Support scrolling in alternate buffer.
+* Fix `deleteLines` behavior.
+* Fix `eraseDisplayFromCursor` removes characters before the cursor.
+
+## [3.3.0] - 2022-10-30
 * Sync ShortcutManager's shortcuts in didUpdateWidget [#140], thanks [@jpnurmi].
 * fix: terminal font size not respecting system level font scale [#138], thanks [@LucasAschenbach].
 * Fix selection color [#135], thanks [@jpnurmi].
@@ -238,4 +244,6 @@
 [#138]: https://github.com/TerminalStudio/xterm.dart/pull/138
 [#140]: https://github.com/TerminalStudio/xterm.dart/pull/140
 [#141]: https://github.com/TerminalStudio/xterm.dart/pull/141
+
+[#151]: https://github.com/TerminalStudio/xterm.dart/pull/151
 
